@@ -1,4 +1,4 @@
-import chromadb
+import chromadb,os
 from pypdf import PdfReader
 from llm_service import generar_embedding
 
@@ -18,7 +18,7 @@ def _extraer_texto(ruta_pdf: str) -> str:
         texto += pagina.extract_text() or ""
     return texto
 
-
+# Se divide en chunks con solapamiento para mejorar la coherencia de los fragmentos y evitar cortar ideas a la mitad.
 def _dividir_en_chunks(texto: str) -> list[str]:
     """
     Divide el texto en fragmentos de CHUNK_SIZE palabras
@@ -28,10 +28,10 @@ def _dividir_en_chunks(texto: str) -> list[str]:
     chunks = []
     inicio = 0
     while inicio < len(palabras):
-        fin = inicio + CHUNK_SIZE
+        fin = inicio + CHUNK_SIZE 
         chunk = " ".join(palabras[inicio:fin])
-        chunks.append(chunk)
-        inicio += CHUNK_SIZE - OVERLAP  # avanza restando el overlap
+        chunks.append(chunk) 
+        inicio += CHUNK_SIZE - OVERLAP  # avanza restando el overlap 
     return chunks
 
 
@@ -88,3 +88,20 @@ def listar_documentos() -> list[str]:
     todos = coleccion.get(include=["metadatas"])
     fuentes = set(m["fuente"] for m in todos["metadatas"])
     return sorted(fuentes)
+
+def eliminar_documento(nombre_doc: str):
+    todos = coleccion.get(include=["metadatas"])
+    ids_a_eliminar = [
+        id_
+        for id_, meta in zip(todos["ids"], todos["metadatas"])
+        if meta["fuente"] == nombre_doc
+    ]
+
+    if not ids_a_eliminar:
+        raise ValueError(f"No se encontró '{nombre_doc}' en la base de datos.")
+
+    coleccion.delete(ids=ids_a_eliminar)
+
+    ruta = f"./pdfs/{nombre_doc}"
+    if os.path.exists(ruta):
+        os.remove(ruta)
