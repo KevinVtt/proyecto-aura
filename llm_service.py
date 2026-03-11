@@ -23,7 +23,11 @@ def generar_respuesta(prompt: str) -> str:
     """
     response = ollama.chat(
         model=CHAT_MODEL,
-        options={"temperature": 0.2},
+        options={
+            "temperature": 0.2,
+            "num_predict": 300,
+            "num_ctx":     2048,
+        },
         messages=[{"role": "user", "content": prompt}]
     )
     return response["message"]["content"]
