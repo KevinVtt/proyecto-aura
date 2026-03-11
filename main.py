@@ -2,10 +2,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import shutil, os, uuid
-
-
-
-
 import document_processor as dp
 import chat_service as cs
 
@@ -30,7 +26,6 @@ class PreguntaRequest(BaseModel):
 
 class NuevaSesionResponse(BaseModel):
     sesion_id: str
-
 
 # ── Endpoints ──────────────────────────────────────────────────────
 
@@ -93,3 +88,14 @@ def ver_historial(sesion_id: str):
 def limpiar_historial(sesion_id: str):
     cs.limpiar_historial(sesion_id)
     return {"mensaje": "Historial limpiado."}
+
+@app.delete("/documentos/{nombre_doc}")
+def eliminar_documento(nombre_doc: str):
+    try:
+        dp.eliminar_documento(nombre_doc)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"mensaje": f"'{nombre_doc}' eliminado correctamente."}
