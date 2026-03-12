@@ -1,33 +1,22 @@
+import os
+from dotenv import load_dotenv
+from groq import Groq
 import ollama
 
-# Modelo de chat — corre 100% local, sin internet ni API key
-CHAT_MODEL  = "gemma3"
+load_dotenv()
 
-# Modelo dedicado para embeddings — liviano (~274MB)
+client = Groq(api_key=os.environ["GROQ_API_KEY"])
+
+CHAT_MODEL  = "llama-3.3-70b-versatile"
 EMBED_MODEL = "nomic-embed-text"
 
 
 def generar_embedding(texto: str) -> list[float]:
-    """
-    Convierte un texto en un vector numérico usando Ollama local.
-    Requiere haber ejecutado: ollama pull nomic-embed-text
-    """
+    """Embeddings con Ollama local."""
     response = ollama.embeddings(model=EMBED_MODEL, prompt=texto)
     return response["embedding"]
 
 
 def generar_respuesta(prompt: str) -> str:
-    """
-    Manda el prompt al LLM local y devuelve la respuesta.
-    Requiere haber ejecutado: ollama pull gemma3
-    """
-    response = ollama.chat(
-        model=CHAT_MODEL,
-        options={
-            "temperature": 0.2,
-            "num_predict": 300,
-            "num_ctx":     2048,
-        },
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response["message"]["content"]
+    """Respuestas con Groq — responde en ~1-2 segundos."""
+    response = client.chat.completion
