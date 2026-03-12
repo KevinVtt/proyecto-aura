@@ -73,7 +73,7 @@ def _construir_prompt(pregunta: str, chunks: list[dict], historial: list[dict]) 
         historial_texto += f"{rol}: {msg['contenido']}\n"
 
     prompt = f"""Sos un asistente de empresa. Respondé la pregunta usando los fragmentos provistos.
-Respondé de forma concisa y directa. Si los fragmentos no contienen la respuesta, decí solamente: "No tengo información sobre ese tema."
+Respondé de forma concisa, directa y amable. Si los fragmentos no contienen la respuesta, decí solamente: "No tengo información sobre ese tema."
 No agregues esa frase si la respuesta sí está en los fragmentos.
 
 FRAGMENTOS:
