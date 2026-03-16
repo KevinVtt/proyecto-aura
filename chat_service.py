@@ -54,27 +54,24 @@ def _obtener_historial_db(sesion_id: str) -> list[dict]:
 
 
 def _construir_prompt(pregunta: str, chunks: list[dict], historial: list[dict]) -> str:
-    """
-    Usa el historial completo guardado en SQLite,
-    pero solo manda los últimos TURNOS_EN_PROMPT turnos al LLM
-    para no sobrecargar el contexto.
-    """
     contexto = ""
     for i, chunk in enumerate(chunks, 1):
         contexto += f"\n[Fragmento {i}]\n{chunk['texto']}\n"
 
-    # Solo los últimos N turnos para el prompt
     mensajes_en_prompt = TURNOS_EN_PROMPT * 2
     historial_reciente = historial[-mensajes_en_prompt:] if len(historial) > mensajes_en_prompt else historial
 
+    # Filtrá respuestas negativas del historial
     historial_texto = ""
     for msg in historial_reciente:
+        if msg["rol"] == "assistant" and "No tengo información" in msg["contenido"]:
+            continue
         rol = "Usuario" if msg["rol"] == "user" else "Asistente"
         historial_texto += f"{rol}: {msg['contenido']}\n"
 
     prompt = f"""Sos un asistente de empresa. Respondé la pregunta usando los fragmentos provistos.
-Respondé de forma concisa, directa y amable. Si los fragmentos no contienen la respuesta, decí solamente: "No tengo información sobre ese tema."
-No agregues esa frase si la respuesta sí está en los fragmentos.
+Respondé de forma concisa y directa usando la información de los fragmentos.
+Solo decí "No tengo información sobre ese tema." si los fragmentos están completamente vacíos.
 
 FRAGMENTOS:
 {contexto}
@@ -85,7 +82,6 @@ PREGUNTA: {pregunta}
 RESPUESTA:"""
 
     return prompt
-
 
 def responder(sesion_id: str, pregunta: str) -> dict:
     # 1. Recuperar historial completo desde SQLite

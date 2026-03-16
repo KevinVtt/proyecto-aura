@@ -64,18 +64,23 @@ def procesar_pdf(ruta_pdf: str, nombre_doc: str):
     print(f"   ✓ Guardado en ChromaDB")
 
 
-def buscar_chunks_relevantes(pregunta: str, top_k: int = 4) -> list[dict]:
-    """
-    Convierte la pregunta en un vector y busca
-    los chunks más similares en ChromaDB.
-    Devuelve lista de {texto, fuente}.
-    """
+def buscar_chunks_relevantes(pregunta: str, top_k: int = 3) -> list[dict]:
     vector_pregunta = generar_embedding(pregunta)
     resultados = coleccion.query(
         query_embeddings=[vector_pregunta],
         n_results=top_k,
-        include=["documents", "metadatas"]
+        include=["documents", "metadatas", "distances"]
     )
+
+    print("=== CHUNKS RECUPERADOS ===")
+    for doc, meta, dist in zip(
+        resultados["documents"][0],
+        resultados["metadatas"][0],
+        resultados["distances"][0]
+    ):
+        print(f"Similitud: {1-dist:.2f} | Fuente: {meta['fuente']}")
+        print(f"Texto: {doc[:150]}")
+        print("---")
 
     chunks = []
     for doc, meta in zip(resultados["documents"][0], resultados["metadatas"][0]):
